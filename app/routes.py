@@ -1,30 +1,34 @@
 from app import app
 from flask import render_template, request, redirect, url_for, flash
-from flask_login import current_user, login_user
+from flask_login import current_user, login_user, logout_user
 from app.models import User
 
 
 @app.route('/')
 @app.route('/index')
 def index():
-    user = { 'username': 'Jonas'}
+    user = {'username': 'Teste'}
     posts = [
-        {'author': {'username': 'Jonas'}, 'body': "Oi!"},
-        {'author': {'username': 'Eduardo'}, 'body': "Olá!"}
+        {'author': {'username': 'Teste'}, 'body': "Olá de Teste"},
+        {'author': {'username': 'Teste2'}, 'body': "Olá!"}
     ]
     return render_template("index.html", user=user, posts=posts)
 
-
 @app.route('/login', methods=["GET", "POST"])
 def login():
-     if current_user.is_authenticated:
+    if current_user.is_authenticated:
         return redirect(url_for('index'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
+    if request.method == "POST":
+        user = User.query.filter_by(username=request.values.get("user")).first()
+        if user is None or not user.password == request.values.get("pass"):
             flash('Invalid username or password')
             return redirect(url_for('login'))
-        login_user(user, remember=form.remember_me.data)
+        r = request.values.get("remember") == "on"
+        login_user(user, remember=r)
         return redirect(url_for('index'))
-    return render_template("login.html", title="Login")
+    return render_template("login.html" , title="Login")
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
